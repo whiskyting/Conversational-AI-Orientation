@@ -20,6 +20,8 @@ const MOVIE_API_KEY = config.get('MovieDB_API_KEY');
 
 app.post('/webhook', function(req, res){
     console.log("[Webhook] in");
+    console.log("Line ID :",req.body.originalDetectIntentRequest.payload.data.source.userId);
+    console.log("User Say :",req.body.queryResult.queryText);
     let data = req.body;
     let queryMovieName = data.queryResult.parameters.MovieName;
     console.log("[queryMovieName] ", queryMovieName);
@@ -29,7 +31,7 @@ app.post('/webhook', function(req, res){
         language:"zh-TW"
     };
     request({
-        uri:"https://api.themoviedb.org/3/search/movie?",
+        uri:"https://api.themoviedb.org/3/search/multi?",
         json:true,
         qs:propertiesObject
     },function(error, response, body){
@@ -41,9 +43,9 @@ app.post('/webhook', function(req, res){
                 //Movie Title
                 let movieTitleObject = {};
                 if(body.results[0].title == queryMovieName){
-                    movieTitleObject.text = {text:[body.results[0].title]};
+                    movieTitleObject.text = {text:[body.results[0].name]};
                 }else{
-                    movieTitleObject.text = {text:["系統內最相關的電影是"+body.results[0].title] };
+                    movieTitleObject.text = {text:["系統內最相關的電影是"+body.results[0].name] };
                 }
                 thisFulfillmentMessages.push(movieTitleObject);
                 //Movie Overview
@@ -58,6 +60,14 @@ app.post('/webhook', function(req, res){
                     movieImageObject.image = { imageUri: "https://image.tmdb.org/t/p/original" + body.results[0].poster_path };
                     thisFulfillmentMessages.push(movieImageObject);
                 }
+                 //Movie Backdrop
+                 if (body.results[0].backdrop_path) {
+                    let movieImageObject = {};
+                    movieImageObject.image = { imageUri: "https://image.tmdb.org/t/p/original" + body.results[0].backdrop_path };
+                    thisFulfillmentMessages.push(movieImageObject);
+                }
+
+            
 
                 console.log("[thisFulfillmentMessages] ", thisFulfillmentMessages);
                 res.json({fulfillmentMessages:thisFulfillmentMessages});
